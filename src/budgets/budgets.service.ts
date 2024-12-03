@@ -85,7 +85,7 @@ export class BudgetsService {
 
   async findByUser(user: User) {
 
-    return await this.budgetRepository.find({ where: { user: {id: user.id} }, relations: ['user']});
+    return await this.budgetRepository.find({ where: { user: {id: user.id} }, relations: ['user', 'category']});
   }
 
   async update(id: number, newTotal: number, user: User) {
