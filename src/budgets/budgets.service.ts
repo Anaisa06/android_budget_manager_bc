@@ -9,6 +9,7 @@ import { addWeeks, endOfMonth, endOfWeek, getMonth, isAfter, isWithinInterval, s
 import { CategoriesService } from 'src/categories/categories.service';
 import { BudgetFrecuency, BugdetType } from 'src/common/enums/budget.enum';
 import { Category } from 'src/categories/entities/category.entity';
+import { TransactionsQueryDto } from './dto/transactions-query.dto';
 
 @Injectable()
 export class BudgetsService {
@@ -77,7 +78,7 @@ export class BudgetsService {
   }
 
   async findByUser(user: User) {
-    console.log(user);
+
     return await this.budgetRepository.find({ where: { user: {id: user.id} }, relations: ['user']});
   }
 
@@ -92,6 +93,7 @@ export class BudgetsService {
 
     return await this.budgetRepository.update(id, { total: newTotal });
   }
+
 
   async remove(id: number, user: User) {   
 
