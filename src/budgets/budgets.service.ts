@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Budget } from './entities/budget.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
-import { addWeeks, endOfMonth, endOfWeek, getMonth, isAfter, isWithinInterval, startOfMonth, startOfWeek, subHours } from 'date-fns';
+import { addWeeks, endOfDay, endOfMonth, endOfWeek, getMonth, isAfter, isWithinInterval, setDate, startOfDay, startOfMonth, startOfWeek, subHours } from 'date-fns';
 import { CategoriesService } from 'src/categories/categories.service';
 import { BudgetFrecuency, BugdetType } from 'src/common/enums/budget.enum';
 import { Category } from 'src/categories/entities/category.entity';
@@ -50,11 +50,17 @@ export class BudgetsService {
       startDate = startOfMonth(currentDate);
     }
 
-
-    //TODO: organizar que sea del 1 al 15 y del 15 al final
     if (frequency === BudgetFrecuency.BIWEEKLY) {
-      startDate = startOfWeek(currentDate, {weekStartsOn: 1});
-      endDate = endOfWeek(addWeeks(currentDate, 1), { weekStartsOn: 1});
+
+      const dayOfMonth = currentDate.getDate()
+
+      if (dayOfMonth >= 1 && dayOfMonth <= 15) {
+        startDate = startOfMonth(currentDate); 
+        endDate =  endOfDay(setDate(currentDate, 15)); 
+      } else {
+        startDate = startOfDay(setDate(currentDate, 16)); 
+        endDate = endOfMonth(currentDate); 
+      }
     }
 
     if (frequency === BudgetFrecuency.WEEKLY) {
