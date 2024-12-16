@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Request, Query } from '@nestjs/common';
 import { BudgetsService } from './budgets.service';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { PrivateService } from 'src/common/decorators/private-service.decorator';
+import { BudgetQueryDto } from './dto/budget-query.dto';
 
 @PrivateService()
 @Controller('budgets')
@@ -22,8 +23,8 @@ export class BudgetsController {
   }
 
   @Get('/user')
-  findByUser(@Request() req: any) {
-    return this.budgetsService.findByUser(req.user);
+  findByUser(@Request() req: any, @Query() query: BudgetQueryDto) {
+    return this.budgetsService.findByUser(req.user, query);
   }
 
   @Get(':id')
