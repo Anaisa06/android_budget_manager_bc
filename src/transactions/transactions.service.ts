@@ -13,6 +13,7 @@ import { TransactionsQueryDto } from 'src/budgets/dto/transactions-query.dto';
 import { CategoriesService } from 'src/categories/categories.service';
 import { toZonedTime } from 'date-fns-tz';
 import { es } from "date-fns/locale"
+import { start } from 'repl';
 
 @Injectable()
 export class TransactionsService {
@@ -20,14 +21,14 @@ export class TransactionsService {
     @InjectRepository(Transaction) private transactionRepository: Repository<Transaction>,
     private budgetsService: BudgetsService,
     private categoriesService: CategoriesService
-  ){}
+  ) { }
 
   async create(createTransactionDto: CreateTransactionDto, user: User) {
     const budget = await this.budgetsService.findOne(createTransactionDto.budgetId);
 
-    if(budget.user.id != user.id) throw new UnauthorizedException('You are not allowed for this action');
+    if (budget.user.id != user.id) throw new UnauthorizedException('You are not allowed for this action');
 
-    if(createTransactionDto.type === TransactionType.BUDGET) {
+    if (createTransactionDto.type === TransactionType.BUDGET) {
       const newTotal = budget.total + createTransactionDto.total;
       const newTotalBudget = await this.budgetsService.update(budget.id, newTotal, user);
       console.log(newTotalBudget)
@@ -48,45 +49,49 @@ export class TransactionsService {
     return await this.transactionRepository.find();
   }
 
-  async findUserTransactions(user: User, transactionQuery: TransactionsQueryDto) {   
+  async findUserTransactions(user: User, transactionQuery: TransactionsQueryDto) {
 
     const query = this.transactionRepository.createQueryBuilder('transaction')
-    .leftJoinAndSelect('transaction.budget', 'budget')
-    .leftJoinAndSelect('budget.category', 'category')
+      .leftJoinAndSelect('transaction.budget', 'budget')
+      .leftJoinAndSelect('budget.category', 'category')
 
-    .where('budget.user.id = :userId', {userId: user.id})
+      .where('budget.user.id = :userId', { userId: user.id })
 
-    const {categoryId, type, startDate, endDate, current, budgetId} = transactionQuery
+    const { categoryId, type, startDate, endDate, current, budgetId } = transactionQuery
 
-    if(categoryId) {
+    if (categoryId) {
       const category = await this.categoriesService.findOne(categoryId);
-      query.andWhere('budget.category.id = :categoryId', {categoryId: category.id});
+      query.andWhere('budget.category.id = :categoryId', { categoryId: category.id });
     }
 
-    if(budgetId) {
+    if (budgetId) {
       const budget = await this.budgetsService.findOne(budgetId);
-      query.andWhere('budget.id = :budgetId', {budgetId});
+      query.andWhere('budget.id = :budgetId', { budgetId });
     }
 
-    if(type) {
-      query.andWhere('transaction.type = :type', {type});
+    if (type) {
+      query.andWhere('transaction.type = :type', { type });
     }
 
     let transactions: Transaction[] = await query.getMany();
 
-    if(current) {
-      const currentBudget = await this.budgetsService.findByUser(user, {current: true, categoryId: null})
-      const {startDate} = currentBudget.reduce((budget, acumm) => isBefore(acumm.startDate, budget.startDate) ? acumm : budget)
-      const {endDate} = currentBudget.reduce((budget, acumm) => isAfter(acumm.startDate, budget.startDate) ? acumm : budget)
+    if (current) {
+      const currentBudget = await this.budgetsService.findByUser(user, { current: true, categoryId: null })
 
-      transactions = transactions.filter(transaction => isWithinInterval(transaction.date, { start: startDate, end: endDate  }))
+      if (currentBudget.length) {
+        const { startDate } = currentBudget.reduce((budget, acumm) => isBefore(acumm.startDate, budget.startDate) ? acumm : budget)
+        const { endDate } = currentBudget.reduce((budget, acumm) => isAfter(acumm.startDate, budget.startDate) ? acumm : budget)
+
+        transactions = transactions.filter(transaction => isWithinInterval(transaction.date, { start: startDate, end: endDate }))
+      }
+
     }
 
-    if(startDate) {
+    if (startDate) {
       transactions = transactions.filter(transaction => isAfter(transaction.date, startDate))
     }
 
-    if(endDate) {
+    if (endDate) {
 
       transactions = transactions.filter(transaction => isBefore(transaction.date, addMinutes(addHours(endDate, 23), 59)))
     }
@@ -109,8 +114,8 @@ export class TransactionsService {
   }
 
   async findOne(id: number) {
-    const transaction = await this.transactionRepository.findOne({ where: {id}});
-    if(!transaction) throw new NotFoundException('Transaction was not found');
+    const transaction = await this.transactionRepository.findOne({ where: { id } });
+    if (!transaction) throw new NotFoundException('Transaction was not found');
     return transaction;
   }
 
