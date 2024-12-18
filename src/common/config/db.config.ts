@@ -18,7 +18,7 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
             database: this.configService.get<string>('DB_NAME'),
             autoLoadEntities: true,
             synchronize: true,     
-            // ssl: true    
+            ssl: this.configService.get<boolean>('SSL_MODE')    
         }
     }   
 
